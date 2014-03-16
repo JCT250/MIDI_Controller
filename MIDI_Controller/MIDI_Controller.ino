@@ -1,5 +1,10 @@
 
 // Set up hardware pins
+#include <midi_Settings.h>
+#include <midi_Namespace.h>
+#include <midi_Defs.h>
+#include <MIDI.h>
+
 static int btn_1 = 0;
 static int btn_2 = 0;
 static int btn_3 = 0;
@@ -39,6 +44,7 @@ void setup()
 	analogWrite(rgb_green, 0);
 	analogWrite(rgb_blue, 255);
 
+	MIDI.begin(4); // Launch MIDI and listen to channel 4
 }
 
 void loop()
@@ -232,7 +238,7 @@ void mode3()
 
 			if((counter_start + hold_length) > counter_stop)// button pressed
 			{
-				// send the control message here
+				MIDI.sendControlChange(94,1,1); // Reverse toggle
 			}
 
 			if(( counter_start + hold_length) < counter_stop) // button held
@@ -256,7 +262,7 @@ void mode3()
 
 			if((counter_start + hold_length) > counter_stop)// button pressed
 			{
-				// send the control message here
+				MIDI.sendControlChange(95,1,1); // Half / Full speed toggle
 			}
 
 			if(( counter_start + hold_length) < counter_stop) // button held
