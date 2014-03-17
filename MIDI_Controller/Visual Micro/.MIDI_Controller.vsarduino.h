@@ -31,7 +31,6 @@ extern "C" void __cxa_pure_virtual() {;}
 void mode1();
 void mode2();
 void mode3();
-void mode4();
 
 #include "C:\Arduino\hardware\arduino\variants\eightanaloginputs\pins_arduino.h" 
 #include "C:\Arduino\hardware\arduino\cores\arduino\arduino.h"
