@@ -24,7 +24,9 @@ int inf_repeat = 0;
 unsigned long counter_start = 0;
 unsigned long counter_stop = 0;
 unsigned long counter = 0;
-int enter = 1; // used to check whether we should enter a loop again (button needs to go high before going low again in order to re enter a held loop)
+int enter1 = 1; // used to check whether we should enter a loop again (button needs to go high before going low again in order to re enter a held loop)
+int enter2 = 1;
+int enter3 = 1;
 int hold_length = 750; // set to chaange the ammount of time needed for a button press to be considered a hold
 int inter_command_delay = 50; //delay between sending MIDI messages
 int scroll_speed = 500; //speed between scroll repeats
@@ -43,7 +45,14 @@ void setup()
   pinMode(rgb_blue, OUTPUT);
   pinMode(btn_1_led, OUTPUT);
   pinMode(btn_2_led, OUTPUT);
+  
+  digitalWrite(rgb_red, HIGH);
+  digitalWrite(rgb_green, HIGH);
+  digitalWrite(rgb_blue, HIGH);
+  
+  delay(5000);
 
+  MIDI.begin(); // Launch MIDI
 
   /* add setup code here */
 
@@ -51,7 +60,7 @@ void setup()
   digitalWrite(rgb_green, HIGH);
   digitalWrite(rgb_blue, LOW);
 
-  MIDI.begin(); // Launch MIDI
+
 }
 
 void loop()
@@ -66,6 +75,9 @@ void mode1()
   digitalWrite(rgb_red, LOW);
   digitalWrite(rgb_green, HIGH);
   digitalWrite(rgb_blue, HIGH);
+  enter1 = 1;
+  enter2 = 1;
+  enter3 = 1;
 
   while(current_mode == 1) // perform the below if we are in the red mode
   {
@@ -141,7 +153,7 @@ void mode1()
       delay(5);
       if(digitalRead(btn_3) == LOW)
       {
-        if(enter == 1)
+        if(enter3 == 1)
         {
           counter_start = millis(); //record the time the button is depressed
 
@@ -172,14 +184,22 @@ void mode1()
               MIDI.sendControlChange(102,bypass,1); //send message to pedal
               break;
             }
-            enter = 0;
+            enter3 = 0;
           }
         }
       }
     }
-    if(digitalRead(btn_3) == HIGH) enter = 1;
+    if(digitalRead(btn_3) == HIGH) enter3 = 1;
   }
 } 
+
+
+
+
+
+
+
+
 
 // This one should be done
 
@@ -188,6 +208,9 @@ void mode2()
   digitalWrite(rgb_red, HIGH);
   digitalWrite(rgb_green, LOW);
   digitalWrite(rgb_blue, HIGH);
+  enter1 = 1;
+  enter2 = 1;
+  enter3 = 1;
 
   while(current_mode == 2) // perform the below if we are in the green mode
   {
@@ -226,29 +249,36 @@ void mode2()
       delay(5);
       if(digitalRead(btn_2) == LOW)
       {
-        counter_start = millis(); //record the time the button is depressed
-
-        digitalWrite(btn_2_led, HIGH); //turn button 2 led on
-
-        while(digitalRead(btn_2) == LOW)
+        if(enter2 == 1)
         {
-          delay(1);
-          counter_stop = millis(); // continually update the time to snapshot as close as possible the time the button is released
-        }
+          counter_start = millis(); //record the time the button is depressed
 
-        digitalWrite(btn_2_led, LOW); //turn button 2 led off
+          digitalWrite(btn_2_led, HIGH); //turn button 2 led on
 
-        if((counter_start + hold_length) >= counter_stop)// button pressed
-        {
-          MIDI.sendControlChange(85,1,1); // send the stop command
-        }
+          while(digitalRead(btn_2) == LOW)
+          {
+            delay(1);
+            counter_stop = millis(); // continually update the time to snapshot as close as possible the time the button is released
+            if(counter_stop > (counter_start + hold_length)) break;
+          }
 
-        if(( counter_start + hold_length) < counter_stop) // button held
-        {
-          MIDI.sendControlChange(86,1,1); // send the start command
+          digitalWrite(btn_2_led, LOW); //turn button 2 led off
+
+          if((counter_start + hold_length) >= counter_stop)// button pressed
+          {
+            MIDI.sendControlChange(85,1,1); // send the stop command
+          }
+
+          if(( counter_start + hold_length) < counter_stop) // button held
+          {
+            MIDI.sendControlChange(86,1,1); // send the start command
+          }
+          enter2 = 0;
         }
       }
     }
+
+    if(digitalRead(btn_2) == HIGH) enter2 = 1;
 
     if(digitalRead(btn_3) == LOW)
     {
@@ -290,6 +320,14 @@ void mode2()
   }
 }
 
+
+
+
+
+
+
+
+
 // This one should be done
 
 void mode3()
@@ -297,107 +335,81 @@ void mode3()
   digitalWrite(rgb_red, HIGH);
   digitalWrite(rgb_green, HIGH);
   digitalWrite(rgb_blue, LOW);
-
-  while(current_mode == 3) // perform the below if we are in the red mode
+  enter1 = 1;
+  enter2 = 1;
+  enter3 = 1;
+  while(current_mode == 3) // perform the below if we are in the blue mode
   {
     if(digitalRead(btn_1) == LOW)
     {
       delay(5);
       if(digitalRead(btn_1) == LOW)
       {
-        //    counter_start = millis(); //record the time the button is depressed
+        if(enter1 == 1)
+        {
+          digitalWrite(btn_1_led, HIGH); //turn button 1 led on
 
-        digitalWrite(btn_1_led, HIGH); //turn button 1 led on
+          digitalWrite(btn_1_led, LOW); //turn button 1 led off
 
-        //   while(digitalRead(btn_1) == LOW)
-        //   {
-        //    delay(1);
-        //    counter_stop = millis(); // continually update the time to snapshot as close as possible the time the button is released
-        //  }
+          MIDI.sendControlChange(93,1,1); // Remote Tap
 
-        digitalWrite(btn_1_led, LOW); //turn button 1 led off
-
-        //   if((counter_start + hold_length) >= counter_stop)// button pressed
-        //   {
-        MIDI.sendControlChange(93,1,1); // Remote Tap
-        //   }
-
-        //    if(( counter_start + hold_length) < counter_stop) // button held
-        //    {
-        // send the control message here
-        //    }
+          enter1 = 0;
+        }
       }
     }
+
+    if(digitalRead(btn_1) == HIGH) enter1 = 1;
 
     if(digitalRead(btn_2) == LOW)
     {
       delay(5);
       if(digitalRead(btn_2) == LOW)
       {
-        //    counter_start = millis(); //record the time the button is depressed
-
-        digitalWrite(btn_2_led, HIGH); //turn button 2 led on
-
-        //     while(digitalRead(btn_2) == LOW)
-        //   {
-        //    delay(1);
-        //     counter_stop = millis(); // continually update the time to snapshot as close as possible the time the button is released
-        //    }
-
-        digitalWrite(btn_2_led, LOW); //turn button 2 led off
-
-        if((counter_start + hold_length) > counter_stop)// button pressed
+        if(enter2 == 1)
         {
-          switch(inf_repeat)
-          {
-          case 0: // if inf repeat is off
-            inf_repeat = 127; //set variable to turn it on
-            MIDI.sendControlChange(97,inf_repeat,1); //send undo message to pedal
-            break;
-          case 1: //if inf repeat is on
-            inf_repeat = 0; //set variable to turn it off
-            MIDI.sendControlChange(97,inf_repeat,1); //send redo message to pedal
-            break;
-          }
-        }
+          digitalWrite(btn_2_led, HIGH); //turn button 2 led on
 
-        //  if(( counter_start + hold_length) < counter_stop) // button held
-        //  {
-        // send the control message here
-        // }
+          MIDI.sendControlChange(97,127,1); //send undo message to pedal
+
+          while(digitalRead(btn_2) == LOW)
+          {
+            delay(1); 
+          }
+
+          digitalWrite(btn_2_led, LOW); //turn button 2 led off
+
+          MIDI.sendControlChange(97,0,1); //send undo message to pedal
+
+          enter2 = 0;
+        }
       }
     }
+
+    if(digitalRead(btn_2) == HIGH) enter2 = 1;
 
     if(digitalRead(btn_3) == LOW)
     {
       delay(5);
       if(digitalRead(btn_3) == LOW)
       {
-        counter_start = millis(); //record the time the button is depressed
-
-        while(digitalRead(btn_3) == LOW)
-        {
-          delay(1);
-          counter_stop = millis(); // continually update the time to snapshot as close as possible the time the button is released
-        }
-
-        if((counter_start + hold_length) >= counter_stop)// button pressed
-        {
-          current_mode ++; //increase the current mode value
-          if(current_mode >= 4) current_mode = 1; //wrap around if we have gone too high
-          delay(mode_change_debounce);
-        }
-
-        if(( counter_start + hold_length) < counter_stop) // button held
-        {
-          // send control message here
-        }
+        current_mode ++; //increase the current mode value
+        if(current_mode >= 4) current_mode = 1; //wrap around if we have gone too high
+        delay(mode_change_debounce);
       }
     }
   }
 }
 
 // This one should be done
+
+
+
+
+
+
+
+
+
 
 
 
